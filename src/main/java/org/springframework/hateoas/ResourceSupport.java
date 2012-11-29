@@ -35,8 +35,13 @@ public class ResourceSupport implements Identifiable<Link> {
 	@com.fasterxml.jackson.annotation.JsonProperty("links")
 	private final List<Link> links;
 
+	@org.codehaus.jackson.annotate.JsonIgnore
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	private final List<EmbeddedResource> embeddedResources;
+
 	public ResourceSupport() {
 		this.links = new ArrayList<Link>();
+        this.embeddedResources = new ArrayList<EmbeddedResource>();
 	}
 
 	/**
@@ -67,6 +72,28 @@ public class ResourceSupport implements Identifiable<Link> {
 		Assert.notNull(links, "Given links must not be null!");
 		for (Link candidate : links) {
 			add(candidate);
+		}
+	}
+
+    /**
+	 * Embeds the given resource to the resource.
+	 *
+	 * @param embeddedResource
+	 */
+	public void embed(EmbeddedResource embeddedResource) {
+		Assert.notNull(embeddedResource, "Embedded resource must not be null!");
+		this.embeddedResources.add(embeddedResource);
+	}
+
+	/**
+	 * Embeds all given {@link EmbeddedResource}s to the resource.
+	 *
+	 * @param links
+	 */
+	public void embed(Iterable<EmbeddedResource> embeddedResources) {
+		Assert.notNull(links, "Embedded resources must not be null!");
+		for (EmbeddedResource candidate : embeddedResources) {
+			embed(candidate);
 		}
 	}
 
@@ -115,13 +142,60 @@ public class ResourceSupport implements Identifiable<Link> {
 		return null;
 	}
 
+    /**
+	 * Returns whether the resource contains {@link Link}s at all.
+	 *
+	 * @return
+	 */
+	public boolean hasEmbeddedResources() {
+		return !this.embeddedResources.isEmpty();
+	}
+
+	/**
+	 * Returns whether the resource contains a {@link Link} with the given rel.
+	 *
+	 * @param rel
+	 * @return
+	 */
+	public boolean hasEmbeddedResource(String rel) {
+		return !getEmbeddedResources(rel).isEmpty();
+	}
+
+	/**
+	 * Returns all {@link Link}s contained in this resource.
+	 *
+	 * @return
+	 */
+	public List<EmbeddedResource> getEmbeddedResources() {
+		return Collections.unmodifiableList(embeddedResources);
+	}
+
+	/**
+	 * Returns the link with the given rel.
+	 *
+	 * @param rel
+	 * @return the link with the given rel or {@literal null} if none found.
+	 */
+    public List<EmbeddedResource> getEmbeddedResources(String rel) {
+
+        List<EmbeddedResource> relEmbeddedResources = new ArrayList<EmbeddedResource>();
+
+        for (EmbeddedResource embeddedResource : embeddedResources) {
+            if (embeddedResource.getRel().equals(rel)) {
+                relEmbeddedResources.add(embeddedResource);
+            }
+        }
+
+        return Collections.unmodifiableList(relEmbeddedResources);
+    }
+
 	/* 
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return String.format("links: %s", links.toString());
+		return String.format("embeddedResources: %s, links: %s", embeddedResources.toString(), links.toString());
 	}
 
 	/* 
